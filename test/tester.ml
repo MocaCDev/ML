@@ -1,3 +1,2 @@
-mov ax, 0x40
-mov ah, 0x20
-mov al, 0x10
+name: db 'Aidan'
+mov ax, 0x40f

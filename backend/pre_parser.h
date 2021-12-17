@@ -9,10 +9,26 @@ typedef struct RegInfo
 	uint8_t		low_bit_val;
 } RegInfo_t;
 
+typedef struct UserDefined
+{
+	char	*name;
+	enum {
+		db,
+		dw,
+		dd
+	} type;
+
+	uint8_t		*db_value;
+	uint16_t	dw_value;
+	uint32_t	dd_value;
+} UserDefined_t;
+
 static RegInfo_t	*ax_reg;
 static RegInfo_t	*bx_reg;
 static RegInfo_t	*cx_reg;
 static RegInfo_t	*dx_reg;
+static UserDefined_t	**_user_defined;
+static size_t		udind = 0;
 
 /*
  * BinaryInfo - Information about current instruction and it's opcode.
@@ -22,7 +38,8 @@ typedef struct BinaryInfo
 	enum {
 		mov_ax = 0xB8,
 		mov_ah = 0xB4,
-		mov_al = 0xB0
+		mov_al = 0xB0,
+		user_def = 0x0,
 	} opcode;
 
 	/*
@@ -35,6 +52,9 @@ typedef struct BinaryInfo
 
 void init_regs()
 {
+	_user_defined = calloc(udind+1, sizeof(*_user_defined));
+	_user_defined[udind] = calloc(1, sizeof(*_user_defined[udind]));
+	
 	ax_reg = calloc(1, sizeof(*ax_reg));
 	bx_reg = calloc(1, sizeof(*bx_reg));
 	cx_reg = calloc(1, sizeof(*cx_reg));

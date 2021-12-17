@@ -5,6 +5,7 @@
 // 	 assembling.
 static uint8_t		*bin_data;
 static size_t		bind = 0;
+static size_t		_udind = 0;
 
 void update_bin()
 {
@@ -22,9 +23,13 @@ void assemble(PBlock_t **blocks, size_t size)
 	{
 		if(blocks[i]->binary_info)
 		{
-			bin_data[bind] = blocks[i]->binary_info->opcode;
-			
-			update_bin();
+			if(blocks[i]->curr_tblock->token_id != user_defined)
+			{
+				bin_data[bind] = blocks[i]->binary_info->opcode;
+
+				update_bin();
+			}
+
 			switch(blocks[i]->curr_tblock->token_id)
 			{
 				case r_ax:
@@ -51,6 +56,17 @@ void assemble(PBlock_t **blocks, size_t size)
 					bin_data[bind] = blocks[i]->binary_info->reg_info->low_bit_val;
 					update_bin();
 
+					break;
+				}
+				case user_defined:
+				{
+					for(size_t i = 0; i < strlen(_user_defined[_udind]->db_value); i++)
+					{
+						bin_data[bind] = _user_defined[_udind]->db_value[i];
+						update_bin();
+					}
+					//printf("%c", bin_data[0]);
+					//update_bin();		
 					break;
 				}
 				default:break;

@@ -92,6 +92,35 @@ void handle_mov(Compiler_t *compiler)
 	}
 }
 
+void handle_user_defined(Compiler_t *compiler)
+{
+	switch(token_id(compiler))
+	{
+		case Tdb:
+		{
+			_user_defined[udind]->type = db;
+
+			next_block(compiler);
+
+			if(
+				token_id(compiler) != hex && token_id(compiler) != dec  &&
+				token_id(compiler) != quote)
+				err("Expected a value assignment")
+			
+			_user_defined[udind]->db_value = token_val(compiler);
+
+			udind++;
+			_user_defined = realloc(
+					  _user_defined,
+					  (udind+1)*sizeof(*_user_defined)
+					);
+			_user_defined[udind] = calloc(1, sizeof(*_user_defined[udind]));
+			break;
+		}
+		default: break;
+	}
+}
+
 void compile(PBlock_t **blocks, size_t size)
 {
 	Compiler_t *compiler	= calloc(1, sizeof(*compiler));
@@ -110,6 +139,14 @@ void compile(PBlock_t **blocks, size_t size)
 				handle_mov(compiler);
 
 				break;				
+			}
+			case user_defined:
+			{
+				next_block(compiler);
+
+				handle_user_defined(compiler);
+
+				break;		
 			}
 			case eof: goto end;
 			default: break;

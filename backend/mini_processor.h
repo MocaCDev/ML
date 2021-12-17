@@ -25,8 +25,13 @@ typedef struct TBlock
 		r_ax,
 		r_ah,
 		r_al,
+		user_defined,
+		Tdb,
+		Tdw,
+		Tdd,
 		hex,
 		dec,
+		quote,
 		eof
 	} token_id;
 
@@ -35,6 +40,7 @@ typedef struct TBlock
 		r8,
 		r16,
 		r32,
+		UD,
 		none
 	} op_i;
 
@@ -42,6 +48,7 @@ typedef struct TBlock
 		imm8,
 		imm16,
 		imm32,
+		_UD,
 		_none
 	} op_s;
 } TBlock_t;
@@ -216,9 +223,53 @@ void init_token(int token_id, char *value, Proc_t *proc)
 
 			blocks[ind]->curr_proc = proc;
 			blocks[ind]->curr_tblock = tblock;
-			blocks[ind]->binary_info = (void *)0;
+			blocks[ind]->binary_info = (void*)0;
 			ind++;
 
+			blocks = realloc(blocks, (ind+1) * sizeof(*blocks));
+			blocks[ind] = calloc(1, sizeof(*blocks[ind]));
+			break;
+		}
+		case user_defined:
+		{
+			tblock->op_i = UD;
+			tblock->op_s = _UD;
+
+			blocks[ind]->curr_proc = proc;
+			blocks[ind]->curr_tblock = tblock;
+			blocks[ind]->binary_info = calloc(1, sizeof(*blocks[ind]->binary_info));
+			blocks[ind]->binary_info->opcode = user_def;
+
+			_user_defined[udind]->name = tblock->token_value;
+			ind++;
+			blocks = realloc(blocks, (ind+1) * sizeof(*blocks));
+			blocks[ind] = calloc(1, sizeof(*blocks[ind]));
+			break;
+		}
+		case Tdb:
+		{
+			tblock->op_i = none;
+			tblock->op_s = _none;
+
+			blocks[ind]->curr_proc = proc;
+			blocks[ind]->curr_tblock = tblock;
+			blocks[ind]->binary_info = (void*)0;
+
+			ind++;
+			blocks = realloc(blocks, (ind+1) * sizeof(*blocks));
+			blocks[ind] = calloc(1, sizeof(*blocks[ind]));
+			break;
+		}
+		case quote:
+		{
+			tblock->op_i = none;
+			tblock->op_s = _none;
+
+			blocks[ind]->curr_proc = proc;
+			blocks[ind]->curr_tblock = tblock;
+			blocks[ind]->binary_info = (void*)0;
+
+			ind++;
 			blocks = realloc(blocks, (ind+1) * sizeof(*blocks));
 			blocks[ind] = calloc(1, sizeof(*blocks[ind]));
 			break;
@@ -243,6 +294,36 @@ char *get_value(Proc_t *proc)
 		);
 		advance(proc);
 	}
+
+	return val;
+
+}
+
+char *get_quote(Proc_t *proc)
+{
+	char *val = calloc(1, sizeof(*val));
+	int index = 0;
+
+	while(proc->curr != '\'')
+	{
+		val[index] = proc->curr;
+		index++;
+		val = realloc(
+			val,
+			(index+1)*sizeof(*val)
+		);
+		advance(proc);
+		if(proc->curr == '\'')
+			break;
+		if(proc->curr == '\n' || proc->curr == '\0')
+		{
+			fprintf(stderr, "Invalid syntax for user-defined assignment");
+			exit(EXIT_FAILURE);
+		}
+	}
+	//val[index++] = '\0';
+	advance(proc);
+	//printf("%ld", strlen(val));
 
 	return val;
 }
@@ -291,6 +372,24 @@ redo:
 				init_token(r_al, word, proc);
 				goto redo;
 			}
+			if(strcmp(word, "db")==0)
+			{
+				init_token(Tdb, word, proc);
+				goto redo;
+			}
+			
+			init_token(user_defined, word, proc);
+			goto redo;
+		}
+		if(proc->curr == '\'')
+		{
+			advance(proc);
+
+			char *q = get_quote(proc);
+
+			init_token(quote, q, proc);
+
+			goto redo;
 		}
 		if(proc->curr >= '0' && proc->curr <= '9')
 		{
