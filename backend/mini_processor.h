@@ -70,6 +70,7 @@ static PBlock_t		**blocks;
 Proc_t *init_proc(char *data)
 {
 	Proc_t *proc = calloc(1, sizeof(*proc));
+
 	blocks = calloc(1, sizeof(*blocks));
 	blocks[ind] = calloc(1, sizeof(*blocks[ind]));
 

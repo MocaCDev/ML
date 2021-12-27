@@ -1,2 +1,1 @@
-name: db 'Aidan'
-mov ax, 0x40f
+mov ax, 0xA
